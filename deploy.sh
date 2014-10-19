@@ -4,23 +4,16 @@
 # ********************************************************
 clear
 
-current_dir=${PWD##*/}
+base_dir=${PWD##*/}
 api_conf=api/conf
+path_composer=$(which composer)
 
-if [ -e .htaccess ]; 
-then
-    echo "Removing .htaccess"
-    rm -f .htaccess
+if [ -x "$path_composer" ] ; then
+  echo "Composer found: $path_composer"
+else
+  echo "Composer not found. Please make sure it is install and within your path to proceed."
+  exit 1
 fi
-
-echo "Generating .htaccess"
-cat > .htaccess << HTACCESS
-  RewriteEngine On
-
-  RewriteBase /$current_dir/
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteRule ^ /$current_dir/index.php [QSA,L]
-HTACCESS
 
 if [ -z "$1" ]; 
 then
@@ -65,6 +58,7 @@ mysql -u $mysql_admin --password=$admin_password -e "create database $mysql_db" 
 
 mysql -u $mysql_user --password=$mysql_password $mysql_db < api/data/schema/create_db.sql
 
+# Generate database configuration for the API to use
 if [ -e $api_conf/db.conf ];
 then
     echo "Removing existing database configuration"
@@ -81,3 +75,23 @@ cat > $api_conf/db.conf << API_CONF
 API_CONF
 
 chmod 644 $api_conf/db.conf
+
+# Install Slim framework
+cd api/
+composer install
+
+# Create .htacess file for Slim to work properly
+if [ -e .htaccess ]; 
+then
+    echo "Removing .htaccess"
+    rm -f .htaccess
+fi
+
+echo "Generating .htaccess"
+cat > .htaccess << HTACCESS
+  RewriteEngine On
+
+  RewriteBase /$base_dir/
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteRule ^ /$base_dir/index.php [QSA,L]
+HTACCESS
