@@ -94,6 +94,7 @@ cd api/
 composer install
 
 # Create .htacess file for Slim to work properly
+cd $base_dir
 if [ -e .htaccess ]; 
 then
     echo "Removing .htaccess"
