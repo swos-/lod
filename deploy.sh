@@ -4,7 +4,8 @@
 # ********************************************************
 clear
 
-base_dir=${PWD##*/}
+api_base_dir=${PWD##*/}
+base_dir=${PWD}
 api_conf=api/conf
 path_composer=$(which composer)
 stored_procs_path=api/data/procedures/*
@@ -105,7 +106,7 @@ echo "Generating .htaccess"
 cat > .htaccess << HTACCESS
   RewriteEngine On
 
-  RewriteBase /$base_dir/
+  RewriteBase /$api_base_dir/
   RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteRule ^ /$base_dir/index.php [QSA,L]
+  RewriteRule ^ /$api_base_dir/index.php [QSA,L]
 HTACCESS
