@@ -7,6 +7,7 @@ clear
 base_dir=${PWD##*/}
 api_conf=api/conf
 path_composer=$(which composer)
+stored_procs_path=api/data/procedures/*
 
 if [ -x "$path_composer" ] ; then
   echo "Composer found: $path_composer"
@@ -15,6 +16,7 @@ else
   exit 1
 fi
 
+# Gather appropriate db credentials
 if [ -z "$1" ]; 
 then
     echo -n "MySQL admin user: "
@@ -54,9 +56,20 @@ then
     mysql_host=${mysql_host:-localhost}
 fi
 
+echo "Creating database: $mysql_db"
+echo "Creating user: $mysql_user"
+
 mysql -u $mysql_admin --password=$admin_password -e "create database $mysql_db" && mysql -u $mysql_admin --password=$admin_password -e "create user '$mysql_user'@'localhost' identified by '$mysql_password'" && mysql -u $mysql_admin --password=$admin_password -e "grant all privileges on $mysql_db.* to '$mysql_user'@'%' identified by '$mysql_password' with grant option";
 
+echo "Creating schema..."
 mysql -u $mysql_user --password=$mysql_password $mysql_db < api/data/schema/create_db.sql
+
+echo "Creating stored procedures..."
+for file in $stored_procs_path
+do
+  echo "Processing: $file"
+  mysql -u $mysql_user --password=$mysql_password $mysql_db < $file
+done
 
 # Generate database configuration for the API to use
 if [ -e $api_conf/db.conf ];
